@@ -23,22 +23,29 @@ export class BotService implements OnModuleInit {
   private async initHandlers() {
     this.bot.command('start', (ctx) => ctx.reply('Шо ты голова'));
     this.bot.on('message', async (ctx) => {
-      //   console.log(ctx.message);
+      if (ctx.message?.text?.includes('Z')) {
+        await ctx.reply(`Слава Богу Z🙏❤️СЛАВА Z🙏❤️АНГЕЛА ХРАНИТЕЛЯ Z КАЖДОМУ ИЗ ВАС🙏❤️БОЖЕ ХРАНИ Z🙏❤️СПАСИБО ВАМ НАШИ СВО🙏🏼❤️🇷🇺 ХРАНИ ZOV✊🇷🇺💯СПАСИБО НАШСлава Богу ZСлава Богу Z🙏❤️СЛАВА Z🙏❤️АНГЕЛА ХРАНИТЕЛЯ Z КАЖДОМУ ИЗ ВАС🙏❤️БОЖЕ ХРАНИ Z🙏❤️СПАСИБО ВАМ НАШИ СВО🙏🏼❤️🇷🇺 ХРАНИ ZOV✊🇷🇺💯СПАСИБО НАШСлава Богу ZСлава Богу Z🙏❤️СЛАВА Z🙏❤️АНГЕЛА ХРАНИТЕЛЯ Z КАЖДОМУ ИЗ ВАС🙏❤️БОЖЕ ХРАНИ Z🙏❤️СПАСИБО ВАМ НАШИ СВО🙏🏼❤️🇷🇺 ХРАНИ ZOV✊🇷🇺💯СПАСИБО НАШСлава Богу Z
+`);
+      }
       const isNikita = ctx.message.from.username === 'iambelov';
-      if (isNikita && ctx.message?.text?.includes('?')) {
-        await ctx.reply('Да.', {
+      if (!isNikita) {
+        return;
+      }
+      if (ctx.message?.text?.includes('?')) {
+        return await ctx.reply('Да.', {
           reply_to_message_id: ctx.message.message_id,
         });
-      } else if (isNikita && ctx.message.video_note) {
-        await ctx.replyWithPoll('Вам нравятся кружочки Никиты?', [
+      }
+      if (ctx.message.video_note) {
+        return await ctx.replyWithPoll('Вам нравятся кружочки Никиты?', [
           { text: 'Да' },
           { text: 'Нет' },
         ]);
-      } else if (isNikita) {
-        await ctx.api.setMessageReaction(ctx.chat.id, ctx.message.message_id, [
-          { type: 'emoji', emoji: '🤡' },
-        ]);
       }
+
+      await ctx.api.setMessageReaction(ctx.chat.id, ctx.message.message_id, [
+        { type: 'emoji', emoji: '🤡' },
+      ]);
     });
   }
 
