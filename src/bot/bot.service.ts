@@ -23,7 +23,7 @@ export class BotService implements OnModuleInit {
   private async initHandlers() {
     this.bot.command('start', (ctx) => ctx.reply('Шо ты голова'));
     this.bot.on('message', async (ctx) => {
-      if (ctx.message?.text?.includes('Z')) {
+      if (ctx.message?.text && ["Z", "ZOV", "хохол"].includes(ctx.message?.text)) {
         await ctx.reply(`Слава Богу Z🙏❤️СЛАВА Z🙏❤️АНГЕЛА ХРАНИТЕЛЯ Z КАЖДОМУ ИЗ ВАС🙏❤️БОЖЕ ХРАНИ Z🙏❤️СПАСИБО ВАМ НАШИ СВО🙏🏼❤️🇷🇺 ХРАНИ ZOV✊🇷🇺💯СПАСИБО НАШСлава Богу ZСлава Богу Z🙏❤️СЛАВА Z🙏❤️АНГЕЛА ХРАНИТЕЛЯ Z КАЖДОМУ ИЗ ВАС🙏❤️БОЖЕ ХРАНИ Z🙏❤️СПАСИБО ВАМ НАШИ СВО🙏🏼❤️🇷🇺 ХРАНИ ZOV✊🇷🇺💯СПАСИБО НАШСлава Богу ZСлава Богу Z🙏❤️СЛАВА Z🙏❤️АНГЕЛА ХРАНИТЕЛЯ Z КАЖДОМУ ИЗ ВАС🙏❤️БОЖЕ ХРАНИ Z🙏❤️СПАСИБО ВАМ НАШИ СВО🙏🏼❤️🇷🇺 ХРАНИ ZOV✊🇷🇺💯СПАСИБО НАШСлава Богу Z
 `);
       }
@@ -31,6 +31,7 @@ export class BotService implements OnModuleInit {
       if (!isNikita) {
         return;
       }
+      console.debug("никитос чето написал", ctx.message?.text);
       if (ctx.message?.text?.includes('?')) {
         return await ctx.reply('Да.', {
           reply_to_message_id: ctx.message.message_id,
