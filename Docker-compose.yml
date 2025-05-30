@@ -7,3 +7,5 @@ services:
       dockerfile: Dockerfile
     container_name: nikita-bot
     restart: always
+    env_file:
+      - .env
