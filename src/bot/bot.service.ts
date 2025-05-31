@@ -3,11 +3,12 @@ import { Bot, Context, InputFile } from 'grammy';
 import { MESSAGE_TEXT } from '../core/consts/message-text';
 import { zovCheck } from '../core/utils/zov-check';
 import { isRussianTextWithWrongLayout } from '../core/consts/check-russian';
+import { isUsername } from '../core/utils/check-username';
 
 @Injectable()
 export class BotService implements OnModuleInit {
   private bot: Bot<Context>;
-  private isClowns: boolean = false;
+  private userClownsMap = new Map<number, NodeJS.Timeout>();
 
   constructor() {
     if (!process.env.TG_SECRET_KEY) {
@@ -44,6 +45,10 @@ export class BotService implements OnModuleInit {
   }
 
   private async messageHandler(ctx: Context) {
+    const chatId = ctx.chat?.id;
+    if (!chatId) {
+      return;
+    }
     if (ctx.message?.text && zovCheck(ctx.message?.text)) {
       return await ctx.reply(MESSAGE_TEXT.ZOV, {
         reply_to_message_id: ctx.message.message_id,
@@ -52,13 +57,14 @@ export class BotService implements OnModuleInit {
 
     if (
       isRussianTextWithWrongLayout(ctx.message?.text) &&
-      !/[А-Яа-яЁё]/.test(ctx.message?.text!)
+      !/[А-Яа-яЁё]/.test(ctx.message?.text!) &&
+      !isUsername(ctx.message?.text)
     ) {
       return await ctx.replyWithSticker(
         'CAACAgIAAxkBAAICCGg60pC6PScPnkS8OkLOuCO_BhDXAALPcwACtmw4SpuBPwNS9N1pNgQ',
       );
     }
-    if (this.isClowns) {
+    if (this.userClownsMap.has(chatId)) {
       await ctx.react('🤡');
     }
   }
@@ -83,16 +89,23 @@ export class BotService implements OnModuleInit {
   }
 
   private async clownsHandler(ctx: Context) {
-    this.isClowns = !this.isClowns;
-    if (this.isClowns) {
-      await ctx.reply('Сейчас буду кидать клоунов');
-      setTimeout(() => {
-        this.isClowns = false;
-        ctx.reply('Клоуны отменены');
-      }, 60000);
+    const chatId = ctx.chat?.id;
+    if (!chatId) {
       return;
     }
-    return await ctx.reply('Отмена клоунов');
+    if (this.userClownsMap.has(chatId)) {
+      clearTimeout(this.userClownsMap.get(chatId)!);
+      this.userClownsMap.delete(chatId);
+      return await ctx.reply('Клоуны отменены');
+    }
+    this.userClownsMap.set(
+      chatId,
+      setTimeout(() => {
+        this.userClownsMap.delete(chatId);
+        ctx.reply('Клоуны отменены');
+      }, 60000),
+    );
+    return await ctx.reply('Клоуны включены');
   }
 
   private async goidaHandler(ctx: Context) {
