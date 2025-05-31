@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Bot, Context } from 'grammy';
+import { Bot, Context, InputFile } from 'grammy';
 import { MESSAGE_TEXT } from '../core/consts/message-text';
 import { zovCheck } from '../core/utils/zov-check';
 import { isRussianTextWithWrongLayout } from '../core/consts/check-russian';
@@ -39,6 +39,7 @@ export class BotService implements OnModuleInit {
     this.bot.command('pin', (ctx) => this.pinHandler(ctx));
     this.bot.command('quiz', (ctx) => this.quizHandler(ctx));
     this.bot.command('clowns', (ctx) => this.clownsHandler(ctx));
+    this.bot.command('goida', (ctx) => this.goidaHandler(ctx));
     this.bot.on('message', (ctx) => this.messageHandler(ctx));
   }
 
@@ -92,5 +93,9 @@ export class BotService implements OnModuleInit {
       return;
     }
     return await ctx.reply('Отмена клоунов');
+  }
+
+  private async goidaHandler(ctx: Context) {
+    await ctx.replyWithVoice(new InputFile('./src/core/assets/goida.mp3'));
   }
 }
