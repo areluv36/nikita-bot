@@ -8,7 +8,7 @@ export const zovCheck = (text: string) => {
   ) {
     return true;
   }
-  if (text.toLowerCase().includes('хох')) {
+  if (text.toLowerCase().includes('хохл')) {
     return true;
   }
 
