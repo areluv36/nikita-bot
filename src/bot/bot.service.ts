@@ -2,10 +2,12 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Bot, Context } from 'grammy';
 import { MESSAGE_TEXT } from '../core/consts/message-text';
 import { zovCheck } from '../core/utils/zov-check';
+import { isRussianTextWithWrongLayout } from '../core/consts/check-russian';
 
 @Injectable()
 export class BotService implements OnModuleInit {
   private bot: Bot<Context>;
+  private isClowns: boolean = false;
 
   constructor() {
     if (!process.env.TG_SECRET_KEY) {
@@ -36,6 +38,7 @@ export class BotService implements OnModuleInit {
     this.bot.command('start', (ctx) => this.startHandler(ctx));
     this.bot.command('pin', (ctx) => this.pinHandler(ctx));
     this.bot.command('quiz', (ctx) => this.quizHandler(ctx));
+    this.bot.command('clowns', (ctx) => this.clownsHandler(ctx));
     this.bot.on('message', (ctx) => this.messageHandler(ctx));
   }
 
@@ -45,20 +48,18 @@ export class BotService implements OnModuleInit {
         reply_to_message_id: ctx.message.message_id,
       });
     }
-    const isNikita = ctx.message!.from.username === 'iambelov';
-    if (!isNikita) {
-      return;
-    }
-    console.debug('никитос чето написал', ctx.message?.text);
 
-    if (ctx.message!.video_note) {
-      return await ctx.replyWithPoll(
-        'Вам нравятся кружочки Никиты?',
-        [{ text: 'Да' }, { text: 'Нет' }],
-        { is_anonymous: false },
+    if (
+      isRussianTextWithWrongLayout(ctx.message?.text) &&
+      !/[А-Яа-яЁё]/.test(ctx.message?.text!)
+    ) {
+      return await ctx.replyWithSticker(
+        'CAACAgIAAxkBAAICCGg60pC6PScPnkS8OkLOuCO_BhDXAALPcwACtmw4SpuBPwNS9N1pNgQ',
       );
     }
-    await ctx.react('🤡');
+    if (this.isClowns) {
+      await ctx.react('🤡');
+    }
   }
 
   private async pinHandler(ctx: Context) {
@@ -78,5 +79,18 @@ export class BotService implements OnModuleInit {
       [{ text: 'Iphone 17' }, { text: 'Скинуть тяо на хохлов' }],
       { is_anonymous: false, type: 'quiz', correct_option_id: 1 },
     );
+  }
+
+  private async clownsHandler(ctx: Context) {
+    this.isClowns = !this.isClowns;
+    if (this.isClowns) {
+      await ctx.reply('Сейчас буду кидать клоунов');
+      setTimeout(() => {
+        this.isClowns = false;
+        ctx.reply('Клоуны отменены');
+      }, 60000);
+      return;
+    }
+    return await ctx.reply('Отмена клоунов');
   }
 }
