@@ -6,6 +6,8 @@ import { isRussianTextWithWrongLayout } from '../core/consts/check-russian';
 import { isUsername } from '../core/utils/check-username';
 import { moscowDateConvert } from '../core/utils/moscow-date';
 import axios from 'axios';
+import { saveArrayBufferToFile } from 'src/core/utils/file-loader';
+import { unlink, writeFile } from 'fs/promises';
 
 @Injectable()
 export class BotService implements OnModuleInit {
@@ -13,6 +15,7 @@ export class BotService implements OnModuleInit {
   private userClownsMap = new Map<number, NodeJS.Timeout>();
   private lastPidor = '';
   private admins = ['iamevgzap', 'AreLuv36'];
+  private assetsPath = './src/core/assets/';
 
   constructor() {
     if (!process.env.TG_SECRET_KEY) {
@@ -47,14 +50,14 @@ export class BotService implements OnModuleInit {
     this.bot.command('goida', (ctx) => this.goidaHandler(ctx));
     this.bot.hears(/кто пидор/i, (ctx) => this.whoIsHandler(ctx));
     this.bot.hears(/я пидор/i, (ctx) => this.iAmPidor(ctx));
-   this.bot.hears(/^курс$/i, (ctx) => this.currencyHandler(ctx));
-    this.bot.hears(/гойда/i, (ctx) => this.goidaHandler(ctx));
+    this.bot.hears(/^курс$/i, (ctx) => this.currencyHandler(ctx));
+    this.bot.hears(/^гойда$/i, (ctx) => this.goidaHandler(ctx));
+    this.bot.on('message:audio', (ctx) => this.messageAudioHandler(ctx));
     this.bot.on('message', (ctx) => this.messageHandler(ctx));
   }
 
   private async messageHandler(ctx: Context) {
     const chatId = ctx.chat?.id;
-
     if (!chatId) {
       return;
     }
@@ -179,5 +182,26 @@ export class BotService implements OnModuleInit {
       return ctx.reply('Да, ты пидор!');
     }
     ctx.reply('Нет(');
+  }
+
+  private async messageAudioHandler(ctx: Context) {
+    if (ctx.from?.username && !this.admins.includes(ctx.from?.username)) return;
+    const file = await ctx.getFile();
+    const fileUrl = `https://api.telegram.org/file/bot${this.bot.token}/${file.file_path}`;
+    const pathAudio = `${this.assetsPath}/audio/${file.file_id}.mp3`;
+    try {
+      const downloaded = (await axios.get<ArrayBuffer>(fileUrl, {
+        responseType: 'arraybuffer',
+      })) as any;
+      await saveArrayBufferToFile(downloaded.data, pathAudio);
+      if (process.env.SQFS_ID)
+        await this.bot.api.sendVoice(
+          process.env.SQFS_ID,
+          new InputFile(pathAudio),
+        );
+    } catch (e) {
+    } finally {
+      unlink(pathAudio);
+    }
   }
 }
