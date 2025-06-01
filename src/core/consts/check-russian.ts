@@ -1,3 +1,6 @@
+import { fileLoader } from '../utils/file-loader';
+import * as nspell from 'nspell';
+
 const KEYBOARD_LAYOUT_MAP: Record<string, string> = {
   q: 'й',
   w: 'ц',
@@ -41,24 +44,60 @@ const KEYBOARD_LAYOUT_MAP: Record<string, string> = {
   '?': ',',
 };
 
-// Функция проверки "перевёрнутой" раскладки
-export function isRussianTextWithWrongLayout(text?: string): boolean {
-  if (!text) return false;
-  const isPotentialWrongLayout = Object.keys(KEYBOARD_LAYOUT_MAP).some(
-    (enChar) => text.toLowerCase().includes(enChar),
-  );
-
-  if (!isPotentialWrongLayout) return false;
-
-  const convertedText = text
+function switchLayout(text: string): string {
+  return text
     .split('')
-    .map((char) => {
-      const lowerChar = char.toLowerCase();
-      return KEYBOARD_LAYOUT_MAP[lowerChar] || char;
-    })
+    .map((char) => KEYBOARD_LAYOUT_MAP[char.toLowerCase()] || char)
     .join('');
+}
 
-  const russianLettersRatio =
-    (convertedText.match(/[а-яё]/gi) || []).length / convertedText.length;
-  return russianLettersRatio > 0.7;
+export function isRussianTextWithWrongLayout(
+  text?: string,
+): { data: string; corrected: boolean } | undefined {
+  if (!text) return;
+
+  const aff = fileLoader('./src/core/assets/dictionary/index.aff');
+  const dic = fileLoader('./src/core/assets/dictionary/index.dic');
+  if (!aff.status || !dic.status) return;
+
+  const spell = nspell(aff.data, dic.data);
+
+  const tokens = text.split(/(\s+)/);
+  let wasCorrected = false;
+
+  const result: string[] = [];
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+
+    const isWord = /^[a-zA-Z]+$/.test(token);
+    const cleaned = token.replace(/[^a-zA-Z]/g, '');
+
+    if (isWord && spell.correct(cleaned)) {
+      result.push(token);
+      continue;
+    }
+
+    const switched = switchLayout(token);
+    const hasCyrillic = /[а-яА-ЯёЁ]/.test(switched);
+
+    if (hasCyrillic) {
+      result.push(switched);
+      wasCorrected = true;
+
+      const next = tokens[i + 1];
+      if (next && /^[a-zA-Z.,;:!?'"`~]$/.test(next)) {
+        const fixedNext = switchLayout(next);
+        result.push(fixedNext);
+        i++;
+      }
+    } else {
+      result.push(token);
+    }
+  }
+
+  return {
+    data: result.join(''),
+    corrected: wasCorrected,
+  };
 }

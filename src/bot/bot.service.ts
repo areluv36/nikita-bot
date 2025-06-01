@@ -11,6 +11,8 @@ import axios from 'axios';
 export class BotService implements OnModuleInit {
   private bot: Bot<Context>;
   private userClownsMap = new Map<number, NodeJS.Timeout>();
+  private lastPidor = '';
+  private admins = ['iamevgzap', 'AreLuv36']
 
   constructor() {
     if (!process.env.TG_SECRET_KEY) {
@@ -44,6 +46,7 @@ export class BotService implements OnModuleInit {
     this.bot.command('clowns', (ctx) => this.clownsHandler(ctx));
     this.bot.command('goida', (ctx) => this.goidaHandler(ctx));
     this.bot.hears(/кто пидор/i, (ctx) => this.whoIsHandler(ctx));
+    this.bot.hears(/я пидор/i, (ctx) => this.iAmPidor(ctx));
     this.bot.hears(/курс/i, (ctx) => this.currencyHandler(ctx));
     this.bot.hears(/гойда/i, (ctx) => this.goidaHandler(ctx));
     this.bot.on('message', (ctx) => this.messageHandler(ctx));
@@ -51,6 +54,7 @@ export class BotService implements OnModuleInit {
 
   private async messageHandler(ctx: Context) {
     const chatId = ctx.chat?.id;
+    console.debug(chatId);
     if (!chatId) {
       return;
     }
@@ -60,13 +64,13 @@ export class BotService implements OnModuleInit {
       });
     }
 
-    if (
-      isRussianTextWithWrongLayout(ctx.message?.text) &&
-      !/[А-Яа-яЁё]/.test(ctx.message?.text!) &&
-      !isUsername(ctx.message?.text)
-    ) {
-      return await ctx.replyWithSticker(
+    const correctedText = isRussianTextWithWrongLayout(ctx.message?.text);
+    if (!isUsername(ctx.message?.text) && correctedText?.corrected) {
+      await ctx.replyWithSticker(
         'CAACAgIAAxkBAAICCGg60pC6PScPnkS8OkLOuCO_BhDXAALPcwACtmw4SpuBPwNS9N1pNgQ',
+      );
+      await ctx.reply(
+        `@${ctx.from?.username} хотел сказать: ${correctedText.data}`,
       );
     }
     if (this.userClownsMap.has(chatId)) {
@@ -159,6 +163,16 @@ export class BotService implements OnModuleInit {
       return;
     }
     const randomMember = members[Math.floor(Math.random() * members.length)];
+    this.lastPidor = randomMember;
     await ctx.reply(`@${randomMember} пидор`);
+    if (randomMember === 'funny_donny_bot') {
+      await ctx.reply(`пиздец я еще и пидор`);
+    }
+  }
+  private iAmPidor(ctx: Context) {
+    if (ctx.from?.username === this.lastPidor) {
+      return ctx.reply('Да, ты пидор!');
+    }
+    ctx.reply('Нет(');
   }
 }
