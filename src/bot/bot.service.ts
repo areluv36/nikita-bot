@@ -12,7 +12,7 @@ export class BotService implements OnModuleInit {
   private bot: Bot<Context>;
   private userClownsMap = new Map<number, NodeJS.Timeout>();
   private lastPidor = '';
-  private admins = ['iamevgzap', 'AreLuv36']
+  private admins = ['iamevgzap', 'AreLuv36'];
 
   constructor() {
     if (!process.env.TG_SECRET_KEY) {
@@ -47,14 +47,14 @@ export class BotService implements OnModuleInit {
     this.bot.command('goida', (ctx) => this.goidaHandler(ctx));
     this.bot.hears(/кто пидор/i, (ctx) => this.whoIsHandler(ctx));
     this.bot.hears(/я пидор/i, (ctx) => this.iAmPidor(ctx));
-    this.bot.hears(/курс/i, (ctx) => this.currencyHandler(ctx));
+   this.bot.hears(/^курс$/i, (ctx) => this.currencyHandler(ctx));
     this.bot.hears(/гойда/i, (ctx) => this.goidaHandler(ctx));
     this.bot.on('message', (ctx) => this.messageHandler(ctx));
   }
 
   private async messageHandler(ctx: Context) {
     const chatId = ctx.chat?.id;
-    console.debug(chatId);
+
     if (!chatId) {
       return;
     }
@@ -65,7 +65,12 @@ export class BotService implements OnModuleInit {
     }
 
     const correctedText = isRussianTextWithWrongLayout(ctx.message?.text);
-    if (!isUsername(ctx.message?.text) && correctedText?.corrected) {
+
+    if (
+      !isUsername(ctx.message?.text) &&
+      correctedText?.corrected &&
+      /[aA-zZ]/.test(ctx.message?.text!)
+    ) {
       await ctx.replyWithSticker(
         'CAACAgIAAxkBAAICCGg60pC6PScPnkS8OkLOuCO_BhDXAALPcwACtmw4SpuBPwNS9N1pNgQ',
       );
