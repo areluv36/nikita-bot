@@ -4,6 +4,8 @@ import { MESSAGE_TEXT } from '../core/consts/message-text';
 import { zovCheck } from '../core/utils/zov-check';
 import { isRussianTextWithWrongLayout } from '../core/consts/check-russian';
 import { isUsername } from '../core/utils/check-username';
+import { moscowDateConvert } from '../core/utils/moscow-date';
+import axios from 'axios';
 
 @Injectable()
 export class BotService implements OnModuleInit {
@@ -41,6 +43,9 @@ export class BotService implements OnModuleInit {
     this.bot.command('quiz', (ctx) => this.quizHandler(ctx));
     this.bot.command('clowns', (ctx) => this.clownsHandler(ctx));
     this.bot.command('goida', (ctx) => this.goidaHandler(ctx));
+    this.bot.hears(/кто пидор/i, (ctx) => this.whoIsHandler(ctx));
+    this.bot.hears(/курс/i, (ctx) => this.currencyHandler(ctx));
+    this.bot.hears(/гойда/i, (ctx) => this.goidaHandler(ctx));
     this.bot.on('message', (ctx) => this.messageHandler(ctx));
   }
 
@@ -110,5 +115,50 @@ export class BotService implements OnModuleInit {
 
   private async goidaHandler(ctx: Context) {
     await ctx.replyWithVoice(new InputFile('./src/core/assets/goida.mp3'));
+  }
+
+  private async currencyHandler(ctx: Context) {
+    try {
+      const response = await axios.get(
+        'https://www.cbr-xml-daily.ru/daily_json.js',
+      );
+      const date = response.data.Date;
+      const usd = {
+        name: response.data.Valute.USD.Name,
+        value: response.data.Valute.USD.Value,
+      };
+      const gbp = {
+        name: response.data.Valute.GBP.Name,
+        value: response.data.Valute.GBP.Value,
+      };
+      const eur = {
+        name: response.data.Valute.EUR.Name,
+        value: response.data.Valute.EUR.Value,
+      };
+      const cny = {
+        name: response.data.Valute.CNY.Name,
+        value: response.data.Valute.CNY.Value,
+      };
+      await ctx.reply(
+        `Курс на ${moscowDateConvert(new Date(date))}\n${usd.name}: ${usd.value}₽\n${gbp.name}: ${gbp.value}₽\n${eur.name}: ${eur.value}₽\n${cny.name}: ${cny.value}₽`,
+      );
+    } catch (error) {
+      await ctx.reply('Ошибка, мемы кончились 😢');
+      console.error(error);
+    }
+  }
+  private async whoIsHandler(ctx: Context) {
+    const members = [
+      'funny_donny_bot',
+      'iambelov',
+      'iamfedyaev',
+      'iamevgzap',
+      'AreLuv36',
+    ];
+    if (!members.includes(ctx.from?.username!)) {
+      return;
+    }
+    const randomMember = members[Math.floor(Math.random() * members.length)];
+    await ctx.reply(`@${randomMember} пидор`);
   }
 }
