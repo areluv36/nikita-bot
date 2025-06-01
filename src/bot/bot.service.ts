@@ -100,7 +100,7 @@ export class BotService implements OnModuleInit {
   private async quizHandler(ctx: Context) {
     return await ctx.replyWithPoll(
       'Что Женя больше всего хочет?',
-      [{ text: 'Iphone 17' }, { text: 'Скинуть тяо на хохлов' }],
+      [{ text: 'Iphone 17 Pro Max' }, { text: 'Скинуть тяо на хохлов' }],
       { is_anonymous: false, type: 'quiz', correct_option_id: 1 },
     );
   }
