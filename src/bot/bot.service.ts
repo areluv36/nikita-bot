@@ -188,7 +188,7 @@ export class BotService implements OnModuleInit {
     if (ctx.from?.username && !this.admins.includes(ctx.from?.username)) return;
     const file = await ctx.getFile();
     const fileUrl = `https://api.telegram.org/file/bot${this.bot.token}/${file.file_path}`;
-    const pathAudio = `${this.assetsPath}/audio/${file.file_id}.mp3`;
+    const pathAudio = `${this.assetsPath}audio/${file.file_id}.mp3`;
     try {
       const downloaded = (await axios.get<ArrayBuffer>(fileUrl, {
         responseType: 'arraybuffer',
