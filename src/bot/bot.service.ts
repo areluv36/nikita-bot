@@ -8,7 +8,10 @@ import { moscowDateConvert } from '../core/utils/moscow-date';
 import axios from 'axios';
 import { saveArrayBufferToFile } from 'src/core/utils/file-loader';
 import { unlink, writeFile } from 'fs/promises';
-
+const isUrl = (text: string) =>
+  /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9-]+\.[a-z]{2,})(\/\S*)?/.test(
+    text,
+  );
 @Injectable()
 export class BotService implements OnModuleInit {
   private bot: Bot<Context>;
@@ -72,7 +75,8 @@ export class BotService implements OnModuleInit {
     if (
       !isUsername(ctx.message?.text) &&
       correctedText?.corrected &&
-      /[aA-zZ]/.test(ctx.message?.text!)
+      /[aA-zZ]/.test(ctx.message?.text!) &&
+      !isUrl(ctx.message?.text!)
     ) {
       await ctx.replyWithSticker(
         'CAACAgIAAxkBAAICCGg60pC6PScPnkS8OkLOuCO_BhDXAALPcwACtmw4SpuBPwNS9N1pNgQ',
